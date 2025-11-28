@@ -1,66 +1,128 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Library – User</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Library Management</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background:#f5f5f5; }
+
+        .hidden { display: none; }
+
+        .dev-panel {
+            background: #ffe4c4;
+            border: 2px solid #ff9900;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        #loginBox {
+            background: white;
+            padding: 20px;
+            width: 280px;
+            border-radius: 8px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.3);
+            position: fixed;
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .btn { 
+            padding: 10px 15px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .btn-red {
+            background: red;
+        }
+    </style>
 </head>
+<body>
 
-<body class="bg-gray-100">
+<h1>📚 Library Book Management</h1>
 
-<!-- Header -->
-<header class="bg-blue-600 text-white p-4 shadow-md">
-    <h1 class="text-3xl font-bold text-center">📚 Library Book Finder</h1>
-</header>
+<div>
+    <button class="btn" onclick="enterDevMode()">Switch to Developer Mode</button>
+    <button class="btn" onclick="enterUserMode()">Switch to User Mode</button>
+</div>
 
-<!-- Main Container -->
-<div class="max-w-3xl mx-auto mt-6 p-4 bg-white shadow-lg rounded-xl">
+<hr>
 
-    <!-- Search Box -->
-    <div class="flex gap-2">
-        <input id="searchBox" 
-               class="w-full p-3 border rounded-lg"
-               placeholder="Search book by title, author, ISBN, or barcode…">
-        <button id="searchBtn"
-                class="bg-blue-600 text-white px-4 rounded-lg hover:bg-blue-700">
-            Search
-        </button>
+<!-- USER UI -->
+<div id="userUI">
+    <h2>User Mode</h2>
+    <input type="text" placeholder="Search book..." id="searchBox">
+    <button class="btn">Search</button>
+
+    <p>Users can only **view books** and **scan shelf sensors**.</p>
+</div>
+
+<!-- DEV UI -->
+<div id="devUI" class="hidden">
+    <h2>Developer Mode</h2>
+
+    <div class="dev-panel">
+        <h3>Book Controls</h3>
+        <button class="btn">Add Book</button>
+        <button class="btn">Delete Book</button>
+        <button class="btn">Move Shelf</button>
+        <button class="btn">Add Shelf</button>
+        <button class="btn-red" onclick="logoutDev()">Logout</button>
     </div>
+</div>
 
-    <!-- Results -->
-    <h2 class="mt-6 text-xl font-semibold">Results</h2>
-    <ul id="results" class="mt-4 space-y-3"></ul>
+<!-- Login Pop-up -->
+<div id="loginBox" class="hidden">
+    <h3>Developer Login</h3>
+    <input type="password" id="devPass" placeholder="Enter dev password"><br><br>
+    <button class="btn" onclick="checkDevPass()">Login</button>
+    <button class="btn-red" onclick="closeLogin()">Cancel</button>
 </div>
 
 <script>
-// Fetch books from API
-async function searchBooks() {
-    const q = document.getElementById('searchBox').value;
-    const res = await fetch(`/api/books?q=${encodeURIComponent(q)}`);
-    const data = await res.json();
-    const list = document.getElementById('results');
+    let DEV_PASSWORD = "12345";   // Change for real use
+    let devMode = false;
 
-    list.innerHTML = data.map(book => `
-        <li class="p-4 bg-gray-50 border rounded-lg">
-            <p class="font-bold text-lg">${book.title || "Untitled Book"}</p>
-            <p class="text-gray-700">${book.author || "Unknown Author"}</p>
-            <p class="text-sm">Barcode: ${book.barcode}</p>
-            <p class="text-sm">Status: <span class="font-semibold">${book.status}</span></p>
-            <p class="text-sm">Shelf: ${book.shelf_code || "Not on shelf"}</p>
-        </li>
-    `).join('');
-}
+    function enterDevMode() {
+        document.getElementById("loginBox").classList.remove("hidden");
+    }
 
-// Search button event
-document.getElementById("searchBtn").onclick = searchBooks;
+    function closeLogin() {
+        document.getElementById("loginBox").classList.add("hidden");
+    }
 
-// WebSocket — live updates
-const ws = new WebSocket(
-    (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host
-);
-ws.onmessage = (msg) => {
-    console.log("Live update:", msg.data);
-};
+    function checkDevPass() {
+        let pass = document.getElementById("devPass").value;
+
+        if (pass === DEV_PASSWORD) {
+            devMode = true;
+            document.getElementById("devUI").classList.remove("hidden");
+            document.getElementById("userUI").classList.add("hidden");
+            closeLogin();
+            alert("Developer mode activated!");
+        } else {
+            alert("Wrong password");
+        }
+    }
+
+    function enterUserMode() {
+        devMode = false;
+        document.getElementById("devUI").classList.add("hidden");
+        document.getElementById("userUI").classList.remove("hidden");
+        alert("User mode activated");
+    }
+
+    function logoutDev() {
+        devMode = false;
+        document.getElementById("devUI").classList.add("hidden");
+        document.getElementById("userUI").classList.remove("hidden");
+        alert("Logged out of Developer mode");
+    }
 </script>
+
 </body>
 </html>
