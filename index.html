@@ -1,127 +1,251 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Library Management</title>
-    <style>
-        body { font-family: Arial; padding: 20px; background:#f5f5f5; }
-
-        .hidden { display: none; }
-
-        .dev-panel {
-            background: #ffe4c4;
-            border: 2px solid #ff9900;
-            padding: 15px;
-            margin-top: 15px;
-        }
-
-        #loginBox {
-            background: white;
-            padding: 20px;
-            width: 280px;
-            border-radius: 8px;
-            box-shadow: 0 0 12px rgba(0,0,0,0.3);
-            position: fixed;
-            top: 30%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-        }
-
-        .btn { 
-            padding: 10px 15px; 
-            background: #007bff; 
-            color: white; 
-            border: none; 
-            border-radius: 6px; 
-            cursor: pointer;
-            margin: 5px;
-        }
-
-        .btn-red {
-            background: red;
-        }
-    </style>
+<title>Library Management</title>
+<style>
+    body { font-family: Arial; background:#f2f2f2; padding: 20px; }
+    .hidden { display: none; }
+    h2 { margin-top: 30px; }
+    .btn {
+        padding: 8px 15px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin: 5px 0;
+    }
+    .btn-red { background: red; }
+    .container {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 0 8px rgba(0,0,0,0.2);
+        margin-bottom: 20px;
+    }
+    #loginBox {
+        background: white;
+        width: 280px;
+        padding: 20px;
+        border-radius: 10px;
+        position: fixed;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    }
+    input, select {
+        padding: 8px;
+        width: 90%;
+        margin: 5px 0;
+        border-radius: 5px;
+        border: 1px solid #aaa;
+    }
+    table { width: 100%; background: white; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 10px; border: 1px solid #ccc; text-align: left; }
+</style>
 </head>
 <body>
 
-<h1>📚 Library Book Management</h1>
+<h1>📚 Library Book Management System</h1>
 
-<div>
-    <button class="btn" onclick="enterDevMode()">Switch to Developer Mode</button>
-    <button class="btn" onclick="enterUserMode()">Switch to User Mode</button>
-</div>
+<button class="btn" onclick="showLogin()">🔐 Developer Mode</button>
+<button class="btn" onclick="switchToUser()">👤 User Mode</button>
 
 <hr>
 
 <!-- USER UI -->
-<div id="userUI">
+<div id="userUI" class="container">
     <h2>User Mode</h2>
-    <input type="text" placeholder="Search book..." id="searchBox">
-    <button class="btn">Search</button>
-
-    <p>Users can only **view books** and **scan shelf sensors**.</p>
+    <input type="text" id="searchUser" placeholder="Search book by name..." onkeyup="renderUserBooks()">
+    <table id="userBookTable"></table>
 </div>
 
 <!-- DEV UI -->
-<div id="devUI" class="hidden">
+<div id="devUI" class="hidden container">
     <h2>Developer Mode</h2>
 
-    <div class="dev-panel">
-        <h3>Book Controls</h3>
-        <button class="btn">Add Book</button>
-        <button class="btn">Delete Book</button>
-        <button class="btn">Move Shelf</button>
-        <button class="btn">Add Shelf</button>
-        <button class="btn-red" onclick="logoutDev()">Logout</button>
-    </div>
+    <h3>Add Book</h3>
+    <input id="bookName" placeholder="Book name">
+    <select id="bookShelf"></select>
+    <button class="btn" onclick="addBook()">Add Book</button>
+
+    <h3>Delete Book</h3>
+    <select id="deleteBookList"></select>
+    <button class="btn btn-red" onclick="deleteBook()">Delete</button>
+
+    <h3>Move Book</h3>
+    <select id="moveBookList"></select>
+    <select id="moveBookShelf"></select>
+    <button class="btn" onclick="moveBook()">Move</button>
+
+    <h3>Add New Shelf</h3>
+    <input id="newShelfName" placeholder="Shelf name">
+    <button class="btn" onclick="addShelf()">Add Shelf</button>
+
+    <h3>All Books</h3>
+    <table id="devBookTable"></table>
+
+    <button class="btn-red" onclick="logoutDev()">Logout Developer Mode</button>
 </div>
 
-<!-- Login Pop-up -->
+<!-- LOGIN POPUP -->
 <div id="loginBox" class="hidden">
     <h3>Developer Login</h3>
-    <input type="password" id="devPass" placeholder="Enter dev password"><br><br>
-    <button class="btn" onclick="checkDevPass()">Login</button>
-    <button class="btn-red" onclick="closeLogin()">Cancel</button>
+    <input type="password" id="devPass" placeholder="Enter password">
+    <button class="btn" onclick="checkDevLogin()">Login</button>
+    <button class="btn-red" onclick="hideLogin()">Cancel</button>
 </div>
 
 <script>
-    let DEV_PASSWORD = "12345";   // Change for real use
-    let devMode = false;
+/*--------------------------------------------------
+    DATA STORAGE
+---------------------------------------------------*/
+let DEV_PASSWORD = "12345";  
+let devMode = false;
 
-    function enterDevMode() {
-        document.getElementById("loginBox").classList.remove("hidden");
+let shelves = ["Shelf A", "Shelf B", "Shelf C"];
+
+let books = [
+    { name: "Book One", shelf: "Shelf A" },
+    { name: "Book Two", shelf: "Shelf B" }
+];
+
+/*--------------------------------------------------
+    LOGIN FUNCTIONS
+---------------------------------------------------*/
+function showLogin() { document.getElementById("loginBox").classList.remove("hidden"); }
+function hideLogin() { document.getElementById("loginBox").classList.add("hidden"); }
+
+function checkDevLogin() {
+    let pass = document.getElementById("devPass").value;
+    if (pass === DEV_PASSWORD) {
+        devMode = true;
+        hideLogin();
+        switchToDev();
+    } else {
+        alert("❌ Wrong password");
     }
+}
 
-    function closeLogin() {
-        document.getElementById("loginBox").classList.add("hidden");
-    }
+function logoutDev() {
+    devMode = false;
+    switchToUser();
+}
 
-    function checkDevPass() {
-        let pass = document.getElementById("devPass").value;
+/*--------------------------------------------------
+    SWITCH UI
+---------------------------------------------------*/
+function switchToUser() {
+    document.getElementById("userUI").classList.remove("hidden");
+    document.getElementById("devUI").classList.add("hidden");
+    renderUserBooks();
+}
 
-        if (pass === DEV_PASSWORD) {
-            devMode = true;
-            document.getElementById("devUI").classList.remove("hidden");
-            document.getElementById("userUI").classList.add("hidden");
-            closeLogin();
-            alert("Developer mode activated!");
-        } else {
-            alert("Wrong password");
-        }
-    }
+function switchToDev() {
+    document.getElementById("userUI").classList.add("hidden");
+    document.getElementById("devUI").classList.remove("hidden");
+    refreshDevUI();
+}
 
-    function enterUserMode() {
-        devMode = false;
-        document.getElementById("devUI").classList.add("hidden");
-        document.getElementById("userUI").classList.remove("hidden");
-        alert("User mode activated");
-    }
+/*--------------------------------------------------
+    DEV PANEL LOGIC
+---------------------------------------------------*/
+function refreshDevUI() {
+    updateShelfDropdowns();
+    updateBookLists();
+    renderDevBooks();
+}
 
-    function logoutDev() {
-        devMode = false;
-        document.getElementById("devUI").classList.add("hidden");
-        document.getElementById("userUI").classList.remove("hidden");
-        alert("Logged out of Developer mode");
-    }
+function updateShelfDropdowns() {
+    let shelfSelects = [document.getElementById("bookShelf"), document.getElementById("moveBookShelf")];
+    shelfSelects.forEach(sel => {
+        sel.innerHTML = "";
+        shelves.forEach(s => {
+            sel.innerHTML += `<option value="${s}">${s}</option>`;
+        });
+    });
+}
+
+function updateBookLists() {
+    let delSel = document.getElementById("deleteBookList");
+    let moveSel = document.getElementById("moveBookList");
+
+    delSel.innerHTML = "";
+    moveSel.innerHTML = "";
+
+    books.forEach((b, i) => {
+        delSel.innerHTML += `<option value="${i}">${b.name}</option>`;
+        moveSel.innerHTML += `<option value="${i}">${b.name}</option>`;
+    });
+}
+
+/*--------------------------------------------------
+    BOOK OPERATIONS
+---------------------------------------------------*/
+function addBook() {
+    let name = document.getElementById("bookName").value;
+    let shelf = document.getElementById("bookShelf").value;
+
+    if (!name) return alert("Enter book name");
+
+    books.push({ name, shelf });
+    alert("Book added!");
+    refreshDevUI();
+}
+
+function deleteBook() {
+    let index = document.getElementById("deleteBookList").value;
+    books.splice(index, 1);
+    alert("Book deleted!");
+    refreshDevUI();
+}
+
+function moveBook() {
+    let index = document.getElementById("moveBookList").value;
+    let newShelf = document.getElementById("moveBookShelf").value;
+
+    books[index].shelf = newShelf;
+    alert("Book moved!");
+    refreshDevUI();
+}
+
+function addShelf() {
+    let name = document.getElementById("newShelfName").value;
+    if (!name) return alert("Enter shelf name");
+
+    shelves.push(name);
+    alert("Shelf added!");
+    refreshDevUI();
+}
+
+/*--------------------------------------------------
+    TABLE RENDERING
+---------------------------------------------------*/
+function renderDevBooks() {
+    let table = document.getElementById("devBookTable");
+    table.innerHTML = `
+        <tr><th>Book Name</th><th>Shelf</th></tr>
+    `;
+    books.forEach(b => {
+        table.innerHTML += `<tr><td>${b.name}</td><td>${b.shelf}</td></tr>`;
+    });
+}
+
+function renderUserBooks() {
+    let table = document.getElementById("userBookTable");
+    let search = document.getElementById("searchUser").value.toLowerCase();
+
+    table.innerHTML = `<tr><th>Name</th><th>Shelf</th></tr>`;
+
+    books.filter(b => b.name.toLowerCase().includes(search))
+         .forEach(b => {
+        table.innerHTML += `<tr><td>${b.name}</td><td>${b.shelf}</td></tr>`;
+    });
+}
+
+/* INITIAL LOAD */
+renderUserBooks();
 </script>
 
 </body>
