@@ -1,0 +1,8 @@
+{
+  "password": "$2a$10$hbmxRnG4f1B0mI2qlxVTRu0Oq8oS5YQcDbG1EXgdoEA/w1f3B3bDe",
+  "shelves": ["Shelf A", "Shelf B"],
+  "books": [
+    { "name": "Book One", "shelf": "Shelf A" },
+    { "name": "Book Two", "shelf": "Shelf B" }
+  ]
+}
