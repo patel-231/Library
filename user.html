@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Library — User</title></head>
+<body>
+<h1>Library Catalog (User)</h1>
+<input id="q" placeholder="search title/author/isbn" />
+<button id="search">Search</button>
+<ul id="results"></ul>
+
+<script>
+const api = (p)=>fetch('/api'+p).then(r=>r.json());
+document.getElementById('search').addEventListener('click', async ()=>{
+  const q = document.getElementById('q').value;
+  const rows = await api(`/books?q=`+encodeURIComponent(q));
+  const el = document.getElementById('results');
+  el.innerHTML = rows.map(r=>`<li>${r.title||r.barcode} — ${r.author||''} [${r.status}] - Shelf: ${r.shelf_code||'N/A'}</li>`).join('');
+});
+
+// optionally connect WebSocket for live events (if the server is same origin)
+const ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
+ws.onmessage = (ev)=> {
+  const obj = JSON.parse(ev.data);
+  if (obj.type === 'event') {
+    console.log('event', obj.event);
+    // you could show a small toast to users or refresh list
+  }
+};
+</script>
+</body>
+</html>
