@@ -1,0 +1,90 @@
+/* styles.css - modern Amazon-like grid */
+:root {
+  --accent: #1a73e8;
+  --card-shadow: 0 6px 18px rgba(20,20,20,0.08);
+  --muted: #666;
+  --bg: #f6f7fb;
+  --white: #fff;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: var(--bg);
+  color: #111;
+}
+
+/* header */
+.site-header {
+  display:flex;
+  gap:1rem;
+  align-items:center;
+  padding:16px 20px;
+  background:linear-gradient(90deg,#fff, #f8fbff);
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+}
+.brand { font-weight:700; font-size:1.2rem; color:var(--accent) }
+.searchbar { display:flex; flex:1; max-width:800px; gap:8px; }
+.searchbar input {
+  flex:1; padding:10px 12px; border-radius:6px; border:1px solid #e2e6ef;
+  outline:none; font-size:14px;
+}
+.searchbar button { padding:9px 12px; border-radius:6px; border:none; background:var(--accent); color:white; cursor:pointer; }
+
+/* filters */
+.filters-top { display:flex; gap:8px; align-items:center; }
+.filters-top select, .filters-top button {
+  padding:8px 10px; border-radius:6px; border:1px solid #e2e6ef; background:var(--white);
+}
+
+/* layout */
+.main-content { display:flex; gap:20px; padding:20px; max-width:1200px; margin:0 auto; }
+.left-panel { width:220px; }
+.panel-section { background:var(--white); padding:12px; border-radius:8px; box-shadow:var(--card-shadow); margin-bottom:12px; }
+.panel-section h4 { margin:0 0 8px 0; font-size:14px; color:#222; }
+.panel-section ul { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; }
+.panel-section li { cursor:pointer; color:var(--muted); padding:6px 8px; border-radius:6px; }
+.panel-section li:hover { background: #f1f6ff; color: #111; }
+
+/* catalog */
+.catalog { flex:1; }
+.grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
+.card {
+  background:var(--white); border-radius:10px; padding:12px; box-shadow:var(--card-shadow);
+  display:flex; flex-direction:column; gap:8px;
+}
+.card img { width:100%; height:260px; object-fit:cover; border-radius:6px; }
+.card .title { font-weight:600; font-size:15px; min-height:40px; }
+.card .author { color:var(--muted); font-size:13px; }
+.card .price { font-weight:700; color:var(--accent); }
+.card .actions { margin-top:auto; display:flex; justify-content:space-between; gap:8px; }
+.card button { padding:8px 10px; border-radius:8px; border:none; cursor:pointer; }
+.btn-primary { background:var(--accent); color:white; }
+.btn-ghost { background:transparent; border:1px solid #e6eefc; color:#333; }
+
+/* pagination */
+.pagination { margin-top:18px; display:flex; gap:6px; justify-content:center; }
+
+/* modal */
+.modal { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.35); }
+.modal.hidden { display:none; }
+.modal-content { width:920px; max-width:95%; background:var(--white); border-radius:10px; padding:18px; position:relative; box-shadow: 0 40px 100px rgba(0,0,0,0.3); max-height:90vh; overflow:auto; }
+.modal .close { position:absolute; right:12px; top:8px; font-size:22px; border:none; background:transparent; cursor:pointer; }
+
+.book-detail { display:grid; grid-template-columns: 320px 1fr; gap:18px; }
+.book-detail img { width:100%; height:420px; object-fit:cover; border-radius:8px; }
+.book-info h2 { margin:0; }
+.book-meta { color:var(--muted); margin-top:4px; }
+.book-actions { margin-top:18px; display:flex; gap:10px; }
+
+/* responsive */
+@media (max-width:880px) {
+  .main-content { flex-direction:column; padding:12px; }
+  .left-panel { width:100%; order:2 }
+  .catalog { order:1 }
+  .book-detail { grid-template-columns: 1fr; }
+}
