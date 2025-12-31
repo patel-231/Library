@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- PWA Meta -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4CAF50">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- iOS support -->
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Daily Journal">
+  <meta charset="UTF-8">
+  <title>Daily Progress Tracker</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f4f6f8;
+      padding: 20px;
+    }
+    form, .history {
+      background: white;
+      padding: 20px;
+      max-width: 650px;
+      margin: 20px auto;
+      border-radius: 8px;
+    }
+    input, textarea, button {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+    }
+    button {
+      cursor: pointer;
+    }
+    .result {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    .entry {
+      border-bottom: 1px solid #ddd;
+      padding: 10px 0;
+    }
+    .danger {
+      background: #ff4d4d;
+      color: white;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+<h2 align="center">Daily Progress Journal</h2>
+
+<form action="https://formspree.io/f/xqajjljd" method="POST" onsubmit="return analyzeAndSave()">
+
+  <!-- Start Date -->
+  <label>Start Date</label>
+  <input type="date" id="startDate" name="Start Date" required>
+
+  <!-- Finish Date -->
+  <label>Finish Date</label>
+  <input type="date" id="finishDate" name="Finish Date" required>
+
+  <!-- Auto -->
+  <label>Total Days</label>
+  <input type="text" id="totalDays" name="Total Days" readonly>
+
+  <label>Running Day</label>
+  <input type="text" id="runningDay" name="Running Day" readonly>
+
+  <label>Today Date</label>
+  <input type="text" id="todayDate" name="Today Date" readonly>
+
+  <!-- Daily Work -->
+  <label>What did you do today?</label>
+  <textarea id="dailyText" name="Daily Work" rows="4" required></textarea>
+
+  <input type="hidden" id="resultField" name="Task Result">
+
+  <div class="result" id="result"></div>
+
+  <button type="submit">Save & Send Email</button>
+</form>
+
+<!-- History -->
+<div class="history">
+  <h3>📅 Day-by-Day History</h3>
+  <div id="historyList"></div>
+
+  <button class="danger" onclick="deleteAll()">❌ Delete Everything</button>
+</div>
+
+<script>
+/* ---------- DATE LOCK LOGIC ---------- */
+function loadDates() {
+  const saved = JSON.parse(localStorage.getItem("fixedDates"));
+  if (saved) {
+    startDate.value = saved.start;
+    finishDate.value = saved.finish;
+    startDate.readOnly = true;
+    finishDate.readOnly = true;
+    calculateDates();
+  }
+}
+
+function saveDatesOnce() {
+  if (!localStorage.getItem("fixedDates")) {
+    localStorage.setItem("fixedDates", JSON.stringify({
+      start: startDate.value,
+      finish: finishDate.value
+    }));
+    startDate.readOnly = true;
+    finishDate.readOnly = true;
+  }
+}
+
+/* ---------- DATE CALCULATION ---------- */
+function calculateDates() {
+  if (!startDate.value || !finishDate.value) return;
+
+  const start = new Date(startDate.value);
+  const finish = new Date(finishDate.value);
+  const today = new Date();
+
+  const total = Math.floor((finish - start) / 86400000) + 1;
+  const running = Math.floor((today - start) / 86400000) + 1;
+
+  totalDays.value = total > 0 ? total : 0;
+  runningDay.value = running > 0 ? running : 0;
+  todayDate.value = today.toDateString();
+}
+
+startDate.addEventListener("change", calculateDates);
+finishDate.addEventListener("change", calculateDates);
+
+/* ---------- ANALYSIS + SAVE ---------- */
+function analyzeAndSave() {
+  saveDatesOnce();
+
+  const text = dailyText.value.toLowerCase();
+  const good = ["study", "exercise", "coding", "read", "workout", "meditation"];
+  const bad = ["lazy", "wasted", "junk", "skip", "scrolling", "sleep late"];
+
+  let score = 0;
+  good.forEach(w => text.includes(w) && score++);
+  bad.forEach(w => text.includes(w) && score--);
+
+  const resultText = score >= 0 ? "GOOD for future ✅" : "BAD for future ❌";
+  result.innerText = resultText;
+  resultField.value = resultText;
+
+  saveDay(resultText);
+  return true;
+}
+
+/* ---------- SAVE HISTORY ---------- */
+function saveDay(result) {
+  const history = JSON.parse(localStorage.getItem("dailyHistory")) || [];
+
+  history.push({
+    date: todayDate.value,
+    day: runningDay.value,
+    text: dailyText.value,
+    result: result
+  });
+
+  localStorage.setItem("dailyHistory", JSON.stringify(history));
+  showHistory();
+}
+
+/* ---------- SHOW HISTORY ---------- */
+function showHistory() {
+  const history = JSON.parse(localStorage.getItem("dailyHistory")) || [];
+  historyList.innerHTML = "";
+
+  history.forEach(h => {
+    const div = document.createElement("div");
+    div.className = "entry";
+    div.innerHTML = `
+      <strong>Day ${h.day} (${h.date})</strong><br>
+      ${h.text}<br>
+      <em>${h.result}</em>
+    `;
+    historyList.appendChild(div);
+  });
+}
+
+/* ---------- DELETE ALL ---------- */
+function deleteAll() {
+  if (confirm("This will delete ALL data permanently. Continue?")) {
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+/* ---------- INIT ---------- */
+loadDates();
+showHistory();
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js")
+    .then(() => console.log("Service Worker Registered"));
+}
+</script>
+</body>
+</html>
